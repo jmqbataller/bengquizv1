@@ -2,133 +2,261 @@
 <html>
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rizal Review Quiz</title>
   <style>
-    body {
-      font-family: Arial;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
+    body { font-family: Arial; max-width: 900px; margin: 30px auto; padding: 16px; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 12px 0; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    button, select {
+      padding: 10px; border-radius: 10px; border: 1px solid #ccc; cursor: pointer;
     }
-    .question-box {
-      border: 1px solid #ddd;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      cursor: pointer;
+    button { width: 100%; }
+    button.primary { background:#111; color:#fff; border-color:#111; }
+    .question-box { border: 1px solid #ddd; padding: 16px; border-radius: 12px; }
+    .muted { color:#666; font-size: 14px; }
+    .pill { display:inline-block; padding:6px 10px; border:1px solid #ddd; border-radius:999px; font-size:13px; }
+    @media (min-width: 640px) {
+      button.choice { width: 100%; }
+      button.primary { width: auto; }
     }
   </style>
 </head>
 <body>
 
 <h1>Rizal Review Quiz</h1>
-<button id="startBtn">Start Quiz</button>
+<p class="muted">Randomized questions from Supabase. Choose how many questions you want.</p>
 
-<div id="quizContainer"></div>
-<div id="scoreContainer"></div>
+<div class="card">
+  <div class="row">
+    <div style="min-width:220px">
+      <div class="muted">Number of Questions</div>
+      <select id="limitSelect">
+        <option value="30">30 questions</option>
+        <option value="50">50 questions</option>
+        <option value="80">80 questions</option>
+        <option value="120">120 questions</option>
+        <option value="all">All Questions (Total Quantity)</option>
+      </select>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <button class="primary" id="startBtn" style="min-width:140px">Start Quiz</button>
+  </div>
+
+  <div id="meta" class="muted" style="margin-top:10px;"></div>
+</div>
+
+<div id="quizArea" style="display:none;">
+  <div class="card">
+    <div class="row" style="justify-content:space-between;">
+      <div class="row">
+        <span class="pill" id="progressPill">Question 1 / 1</span>
+        <span class="pill" id="scorePill">Score: 0</span>
+      </div>
+      <div class="row">
+        <button id="restartBtn" style="width:auto">Restart</button>
+        <button class="primary" id="finishBtn" style="width:auto">Finish</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="question-box">
+      <h3 id="questionTitle" style="margin:0 0 10px 0;"></h3>
+      <p id="questionText" style="margin:0 0 12px 0;"></p>
+      <div id="choices"></div>
+      <div id="feedback" class="muted" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <div class="card row" style="justify-content:space-between;">
+    <button id="prevBtn" style="width:auto">← Previous</button>
+    <button id="nextBtn" class="primary" style="width:auto">Next →</button>
+  </div>
+</div>
+
+<div id="resultArea" class="card" style="display:none;">
+  <h2>Result</h2>
+  <p id="resultText"></p>
+  <button class="primary" id="newQuizBtn" style="width:auto">New Quiz</button>
+</div>
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
   const SUPABASE_URL = "https://testkzelancwtyzlzcta.supabase.co";
   const SUPABASE_KEY = "sb_publishable_sVpwVVqwCGtfUHYM5IOkyg_uwzbfBtJ";
-
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const limitSelect = document.getElementById("limitSelect");
   const startBtn = document.getElementById("startBtn");
-  const quizContainer = document.getElementById("quizContainer");
-  const scoreContainer = document.getElementById("scoreContainer");
+  const restartBtn = document.getElementById("restartBtn");
+  const finishBtn = document.getElementById("finishBtn");
+  const newQuizBtn = document.getElementById("newQuizBtn");
 
+  const meta = document.getElementById("meta");
+
+  const quizArea = document.getElementById("quizArea");
+  const resultArea = document.getElementById("resultArea");
+
+  const progressPill = document.getElementById("progressPill");
+  const scorePill = document.getElementById("scorePill");
+
+  const questionTitle = document.getElementById("questionTitle");
+  const questionText = document.getElementById("questionText");
+  const choicesDiv = document.getElementById("choices");
+  const feedback = document.getElementById("feedback");
+
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+
+  let allQuestions = [];
   let questions = [];
-  let currentIndex = 0;
+  let index = 0;
   let score = 0;
+  let answered = new Map(); // questionId -> { selected, correct }
 
-  function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [array[i], array[j]] = [array[j], array[i]];
+      [arr[i], arr[j]] = [arr[j], arr[i]];
     }
-    return array;
+    return arr;
   }
 
-  startBtn.addEventListener("click", startQuiz);
-
-  async function startQuiz() {
-    scoreContainer.textContent = "";
-    quizContainer.textContent = "Loading questions...";
-    score = 0;
-    currentIndex = 0;
-
-    const { data, error } = await supabase
-      .from("questions")
-      .select("*");
+  async function fetchAllQuestionsOnce() {
+    meta.textContent = "Loading total questions...";
+    const { data, error } = await supabase.from("questions").select("*");
 
     if (error) {
-      quizContainer.textContent = "";
+      meta.textContent = "";
       alert("Error loading questions. Check Console (F12).");
       console.error(error);
+      return false;
+    }
+
+    allQuestions = data || [];
+    meta.textContent = `Total Questions in Database: ${allQuestions.length}`;
+    return true;
+  }
+
+  function pickQuestions() {
+    const chosen = limitSelect.value;
+    const shuffled = shuffle([...allQuestions]); // shuffle copy
+
+    if (chosen === "all") return shuffled;
+
+    const n = Math.max(1, Number(chosen));
+    return shuffled.slice(0, Math.min(n, shuffled.length));
+  }
+
+  function resetState() {
+    questions = [];
+    index = 0;
+    score = 0;
+    answered = new Map();
+    feedback.textContent = "";
+    choicesDiv.innerHTML = "";
+  }
+
+  function renderQuestion() {
+    const q = questions[index];
+    if (!q) return;
+
+    progressPill.textContent = `Question ${index + 1} / ${questions.length}`;
+    scorePill.textContent = `Score: ${score}`;
+
+    questionTitle.textContent = `Question ${index + 1}`;
+    questionText.textContent = q.question;
+
+    const options = [
+      { key: "A", text: q.choice_a },
+      { key: "B", text: q.choice_b },
+      { key: "C", text: q.choice_c },
+      { key: "D", text: q.choice_d },
+    ];
+
+    const saved = answered.get(q.id);
+
+    choicesDiv.innerHTML = "";
+    feedback.textContent = "";
+
+    for (const opt of options) {
+      const btn = document.createElement("button");
+      btn.className = "choice";
+      btn.textContent = `${opt.key}. ${opt.text}`;
+
+      // lock if already answered
+      if (saved) btn.disabled = true;
+
+      btn.addEventListener("click", () => selectAnswer(opt.key));
+      choicesDiv.appendChild(btn);
+    }
+
+    if (saved) {
+      feedback.textContent = saved.correct
+        ? "✅ Correct!"
+        : `❌ Wrong. Correct answer is ${q.correct_choice}.`;
+    }
+
+    prevBtn.disabled = index === 0;
+    nextBtn.disabled = index === questions.length - 1;
+  }
+
+  function selectAnswer(letter) {
+    const q = questions[index];
+    if (!q) return;
+    if (answered.has(q.id)) return;
+
+    const correct = letter === q.correct_choice;
+    answered.set(q.id, { selected: letter, correct });
+
+    if (correct) score += 1;
+
+    renderQuestion();
+  }
+
+  function finishQuiz() {
+    quizArea.style.display = "none";
+    resultArea.style.display = "block";
+    resultText.textContent = `You scored ${score} out of ${questions.length}.`;
+  }
+
+  async function startQuiz() {
+    resultArea.style.display = "none";
+    quizArea.style.display = "none";
+    resetState();
+
+    // fetch all questions once (for total count + random selection)
+    if (allQuestions.length === 0) {
+      const ok = await fetchAllQuestionsOnce();
+      if (!ok) return;
+    }
+
+    questions = pickQuestions();
+
+    if (questions.length === 0) {
+      alert("No questions found in the database.");
       return;
     }
 
-    if (!data || data.length === 0) {
-      quizContainer.textContent = "No questions found in table.";
-      return;
-    }
-
-    questions = shuffle(data);
-    showQuestion();
+    quizArea.style.display = "block";
+    renderQuestion();
   }
 
-  function showQuestion() {
-    if (currentIndex >= questions.length) {
-      showScore();
-      return;
-    }
+  // buttons
+  startBtn.addEventListener("click", startQuiz);
+  restartBtn.addEventListener("click", startQuiz);
+  finishBtn.addEventListener("click", finishQuiz);
+  newQuizBtn.addEventListener("click", startQuiz);
 
-    const q = questions[currentIndex];
+  prevBtn.addEventListener("click", () => { if (index > 0) { index--; renderQuestion(); } });
+  nextBtn.addEventListener("click", () => { if (index < questions.length - 1) { index++; renderQuestion(); } });
 
-    quizContainer.innerHTML = `
-      <div class="question-box">
-        <h3>Question ${currentIndex + 1} / ${questions.length}</h3>
-        <p>${q.question}</p>
-        <button data-choice="A">A. ${q.choice_a}</button>
-        <button data-choice="B">B. ${q.choice_b}</button>
-        <button data-choice="C">C. ${q.choice_c}</button>
-        <button data-choice="D">D. ${q.choice_d}</button>
-      </div>
-    `;
-
-    quizContainer.querySelectorAll("button[data-choice]").forEach(btn => {
-      btn.addEventListener("click", () => checkAnswer(btn.dataset.choice));
-    });
-  }
-
-  function checkAnswer(selected) {
-    const correct = questions[currentIndex].correct_choice;
-
-    if (selected === correct) {
-      score++;
-      alert("Correct!");
-    } else {
-      alert("Wrong! Correct answer is " + correct);
-    }
-
-    currentIndex++;
-    showQuestion();
-  }
-
-  function showScore() {
-    quizContainer.innerHTML = "";
-    scoreContainer.innerHTML =
-      `<h2>Your Score: ${score} / ${questions.length}</h2>`;
-  }
+  // show total count on load
+  fetchAllQuestionsOnce();
 </script>
 
 </body>
