@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rizal Review Quiz</title>
 
-  <!-- ✅ NEW: jsPDF for PDF receipt generation -->
+  <!-- jsPDF for PDF receipt generation -->
   <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 
   <style>
@@ -139,7 +139,7 @@
     .switch.on .knob{left:20px; background:#dcfce7}
     .small{font-size:13px;color:var(--muted)}
 
-    /* ✅ NEW: Redeem area */
+    /* Redeem area */
     .grid2{display:grid; gap:12px;}
     @media(min-width: 860px){ .grid2{grid-template-columns: 1.15fr .85fr;} }
     .box{
@@ -166,6 +166,30 @@
       display:inline-flex; align-items:center; justify-content:center;
       padding:10px 12px; border-radius:12px; border:1px solid var(--border);
       background: rgba(15,23,42,.65); color:var(--text); text-decoration:none;
+    }
+
+    /* ✅ NEW: Rewards criteria panel */
+    .criteria{
+      display:grid;
+      gap:10px;
+      margin-top:12px;
+    }
+    .criteria .citem{
+      padding:10px 12px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(17,26,46,.55);
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    .criteria .citem strong{font-weight:900}
+    .badge{
+      display:inline-flex; align-items:center;
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(15,23,42,.55);
+      font-size:12px;
+      color:var(--muted);
     }
   </style>
 </head>
@@ -211,7 +235,7 @@
     <div id="meta" class="small" style="margin-top:10px;"></div>
   </div>
 
-  <!-- ✅ NEW: Redeem reward area (always visible) -->
+  <!-- ✅ Redeem reward area (always visible) -->
   <div class="card">
     <div class="grid2">
       <div class="box">
@@ -225,7 +249,20 @@
           </div>
         </div>
 
-        <div class="small" style="margin-top:10px;">
+        <!-- ✅ NEW: Rewards criteria -->
+        <div style="margin-top:14px;">
+          <div style="font-weight:900;">What are the rewards?</div>
+          <div class="criteria" id="criteriaBox">
+            <div class="citem"><div><strong>0–49 points</strong><div class="small">🍭 1 pc Lollipop — Keep going!</div></div><div class="badge">Cost: 1</div></div>
+            <div class="citem"><div><strong>50 points</strong><div class="small">🍟 Fries</div></div><div class="badge">Cost: 50</div></div>
+            <div class="citem"><div><strong>100 points</strong><div class="small">🍟🧋 Fries with milk tea</div></div><div class="badge">Cost: 100</div></div>
+            <div class="citem"><div><strong>150 points</strong><div class="small">🍽️ Dinner</div></div><div class="badge">Cost: 150</div></div>
+            <div class="citem"><div><strong>151+ points</strong><div class="small">🎁 Whatever you want / requested</div></div><div class="badge">Cost: 151</div></div>
+          </div>
+          <div class="small" style="margin-top:8px;">Tip: Redeeming will deduct points based on the cost above.</div>
+        </div>
+
+        <div class="small" style="margin-top:14px;">
           Redemption History
         </div>
         <ul class="list" id="redeemList"></ul>
@@ -319,7 +356,7 @@
   const rewardPill = document.getElementById("rewardPill");
   const progressBar = document.getElementById("progressBar");
 
-  // ✅ NEW top display
+  // top display
   const sessionScorePillTop = document.getElementById("sessionScorePillTop");
   const rewardPillTop = document.getElementById("rewardPillTop");
   const redeemList = document.getElementById("redeemList");
@@ -344,7 +381,7 @@
   let sessionScore = 0;
   let sessionAnswered = 0;
 
-  // ✅ NEW: redemption log
+  // redemption log
   let redemptionHistory = []; // {id, date, item, cost, before, after, note}
 
   let lastMilestone = 0;
@@ -390,7 +427,7 @@
     if (points >= 150) return { tier: "150", label: "🍽️ Dinner", cost: 150 };
     if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea", cost: 100 };
     if (points >= 50)  return { tier: "50",  label: "🍟 Fries", cost: 50 };
-    return { tier: "0-49", label: "🍭 Redeem: 1 pc Lollipop — Keep going!", cost: 1 };
+    return { tier: "0-49", label: "🍭 1 pc Lollipop — Keep going!", cost: 1 };
   }
 
   function maybeMilestoneToast(points) {
@@ -417,7 +454,6 @@
       return;
     }
 
-    // latest first
     const latest = [...redemptionHistory].reverse().slice(0, 5);
     for (const r of latest) {
       const li = document.createElement("li");
@@ -437,7 +473,7 @@
     }
   }
 
-  // ✅ NEW: generate PDF and preview it
+  // generate PDF + preview
   function generateReceiptPDF(receipt){
     const jsPDF = window.jspdf?.jsPDF;
     if (!jsPDF) {
@@ -503,7 +539,6 @@
     doc.setFontSize(10);
     doc.text("Thank you! Keep going and earn more rewards 🎉", left, y);
 
-    // output as blob url for preview
     const blob = doc.output("blob");
     const url = URL.createObjectURL(blob);
 
@@ -520,11 +555,11 @@
     const reward = getReward(sessionScore);
     rewardPill.textContent = reward.label;
 
-    // top
     sessionScorePillTop.textContent = String(sessionScore);
     rewardPillTop.textContent = reward.label;
 
-    const canRedeem = sessionScore > 0;
+    // ✅ enable redeem only if user can afford at least 1 point (lollipop)
+    const canRedeem = sessionScore >= 1;
     redeemBtn.disabled = !canRedeem;
     redeemBtnTop.disabled = !canRedeem;
 
@@ -651,7 +686,6 @@
     }
   }
 
-  // ✅ NEW: redeem + create receipt + PDF preview
   function redeemReward() {
     const reward = getReward(sessionScore);
 
@@ -663,7 +697,6 @@
     let note = "";
     let item = reward.label;
 
-    // For 151+ tier, user can type request (still costs 151 points)
     if (reward.tier === "151+") {
       const wish = prompt("🎁 What do you want to request/redeem? (This will deduct 151 points)");
       if (!wish || !wish.trim()) {
@@ -679,7 +712,7 @@
     const after = sessionScore;
 
     const receipt = {
-      id: crypto.randomUUID ? crypto.randomUUID().slice(0,8).toUpperCase() : String(Date.now()),
+      id: (crypto?.randomUUID ? crypto.randomUUID().slice(0,8).toUpperCase() : String(Date.now()).slice(-8)),
       date: new Date().toISOString(),
       item,
       cost: reward.cost,
@@ -734,13 +767,11 @@
     renderQuestion();
   }
 
-  // buttons
   startBtn.addEventListener("click", startQuiz);
   restartBtn.addEventListener("click", startQuiz);
   finishBtn.addEventListener("click", finishQuiz);
   newQuizBtn.addEventListener("click", startQuiz);
 
-  // redeem buttons (both top and inside quiz)
   redeemBtn.addEventListener("click", redeemReward);
   redeemBtnTop.addEventListener("click", redeemReward);
 
