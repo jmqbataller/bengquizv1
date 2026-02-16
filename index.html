@@ -303,13 +303,16 @@
   }
 
   // ✅ Convert points -> reward
-  function getReward(points) {
-    if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested" };
-    if (points >= 150) return { tier: "150", label: "🍽️ Dinner" };
-    if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea" };
-    if (points >= 50)  return { tier: "50",  label: "🍟 Fries" };
-    return { tier: "0", label: "✨ Keep going!" };
-  }
+function getReward(points) {
+  if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested" };
+  if (points >= 150) return { tier: "150", label: "🍽️ Dinner" };
+  if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea" };
+  if (points >= 50)  return { tier: "50",  label: "🍟 Fries" };
+
+  // ✅ NEW RULE for 0–49
+  return { tier: "0-49", label: "🍭 Redeem: 1 pc Lollipop — Keep going!" };
+}
+
 
   function updateSessionUI(){
     sessionScorePill.textContent = String(sessionScore);
@@ -510,3 +513,4 @@
 
 </body>
 </html>
+
