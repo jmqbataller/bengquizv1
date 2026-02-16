@@ -6,15 +6,9 @@
   <title>Rizal Review Quiz</title>
   <style>
     :root{
-      --bg:#0b1220;
-      --card:#111a2e;
-      --text:#e6e9f2;
-      --muted:#aab3c5;
-      --border:rgba(255,255,255,.10);
-      --accent:#7c5cff;
-      --good:#22c55e;
-      --bad:#ef4444;
-      --shadow: 0 12px 30px rgba(0,0,0,.35);
+      --bg:#0b1220; --text:#e6e9f2; --muted:#aab3c5;
+      --border:rgba(255,255,255,.10); --accent:#7c5cff;
+      --good:#22c55e; --bad:#ef4444; --shadow: 0 12px 30px rgba(0,0,0,.35);
     }
     *{box-sizing:border-box}
     body{
@@ -31,7 +25,6 @@
     .title{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:8px 0 12px;}
     h1{margin:0;font-size:28px;letter-spacing:.2px}
     .subtitle{margin:6px 0 0;color:var(--muted);font-size:14px}
-
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
       border:1px solid var(--border);
@@ -44,7 +37,6 @@
     .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
     .spacer{flex:1}
     label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-
     select, button, .toggle{
       border-radius:12px;
       border:1px solid var(--border);
@@ -61,11 +53,10 @@
       background: linear-gradient(135deg, var(--accent), #4fd1c5);
       border-color: transparent;
       color:#081019;
-      font-weight:800;
+      font-weight:900;
     }
     button.ghost{background: transparent;}
     button:disabled{opacity:.55;cursor:not-allowed;}
-
     .pills{display:flex; gap:10px; flex-wrap:wrap}
     .pill{
       display:inline-flex; align-items:center; gap:8px;
@@ -77,24 +68,16 @@
       color:var(--text);
     }
     .pill strong{color:#fff}
-
     .bar{
-      width:100%;
-      height:10px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background: rgba(15,23,42,.55);
-      overflow:hidden;
-      margin-top:10px;
+      width:100%; height:10px; border-radius:999px; border:1px solid var(--border);
+      background: rgba(15,23,42,.55); overflow:hidden; margin-top:10px;
     }
     .bar > div{
-      height:100%;
-      width:0%;
+      height:100%; width:0%;
       background: linear-gradient(90deg, var(--accent), #4fd1c5);
       border-radius:999px;
       transition: width .35s ease;
     }
-
     .question-box{
       background: rgba(15,23,42,.45);
       border:1px solid var(--border);
@@ -104,18 +87,14 @@
     .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
     .qtitle{margin:0;font-size:16px;color:var(--muted)}
     .qtext{margin:0;font-size:18px;line-height:1.45}
-
     .choices{display:grid; gap:10px; margin-top:14px;}
     .choice{
-      text-align:left;
-      width:100%;
+      text-align:left; width:100%;
       padding:12px 14px;
       border-radius:14px;
       background: rgba(17,26,46,.75);
       border:1px solid var(--border);
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
+      display:flex; gap:10px; align-items:flex-start;
     }
     .choice:hover{filter: brightness(1.10)}
     .choice .key{
@@ -127,20 +106,13 @@
       font-weight:900;
       color:#d9d2ff;
     }
-    .choice.correct{
-      border-color: rgba(34,197,94,.55);
-      box-shadow: 0 0 0 3px rgba(34,197,94,.12);
-    }
-    .choice.wrong{
-      border-color: rgba(239,68,68,.55);
-      box-shadow: 0 0 0 3px rgba(239,68,68,.12);
-    }
-
+    .choice.correct{border-color: rgba(34,197,94,.55); box-shadow: 0 0 0 3px rgba(34,197,94,.12);}
+    .choice.wrong{border-color: rgba(239,68,68,.55); box-shadow: 0 0 0 3px rgba(239,68,68,.12);}
     .feedback{margin-top:12px;color:var(--muted);font-size:14px;min-height:18px;}
 
     .toast-wrap{position: fixed;top: 14px;right: 14px;display: grid;gap: 10px;z-index: 9999;}
     .toast{
-      width: min(360px, calc(100vw - 28px));
+      width: min(380px, calc(100vw - 28px));
       background: rgba(15,23,42,.92);
       border:1px solid var(--border);
       border-radius: 14px;
@@ -170,7 +142,7 @@
   <div class="title">
     <div>
       <h1>Rizal Review Quiz</h1>
-      <div class="subtitle">Randomized questions. Session points keep adding until you refresh the page.</div>
+      <div class="subtitle">Session points keep adding until you refresh the page.</div>
     </div>
   </div>
 
@@ -214,6 +186,7 @@
           <span class="pill">Quiz Score: <strong id="scorePill">0</strong></span>
           <span class="pill">Session Score: <strong id="sessionScorePill">0</strong></span>
           <span class="pill">Session Answered: <strong id="sessionAnsweredPill">0</strong></span>
+          <span class="pill">Reward: <strong id="rewardPill">—</strong></span>
         </div>
         <div class="row">
           <button class="ghost" id="restartBtn" style="width:auto">Restart</button>
@@ -270,6 +243,7 @@
   const scorePill = document.getElementById("scorePill");
   const sessionScorePill = document.getElementById("sessionScorePill");
   const sessionAnsweredPill = document.getElementById("sessionAnsweredPill");
+  const rewardPill = document.getElementById("rewardPill");
   const progressBar = document.getElementById("progressBar");
 
   const questionTitle = document.getElementById("questionTitle");
@@ -289,6 +263,9 @@
   // ✅ Session totals (do NOT reset on restart)
   let sessionScore = 0;
   let sessionAnswered = 0;
+
+  // Reward tier tracking (so we can toast when user reaches a new tier)
+  let lastRewardTier = "";
 
   let allQuestions = [];
   let questions = [];
@@ -325,9 +302,30 @@
     setTimeout(() => el.remove(), 2050);
   }
 
+  // ✅ Convert points -> reward
+  function getReward(points) {
+    if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested" };
+    if (points >= 150) return { tier: "150", label: "🍽️ Dinner" };
+    if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea" };
+    if (points >= 50)  return { tier: "50",  label: "🍟 Fries" };
+    return { tier: "0", label: "✨ Keep going!" };
+  }
+
   function updateSessionUI(){
     sessionScorePill.textContent = String(sessionScore);
     sessionAnsweredPill.textContent = String(sessionAnswered);
+
+    const reward = getReward(sessionScore);
+    rewardPill.textContent = reward.label;
+
+    // toast only when user reaches a new tier
+    if (reward.tier !== lastRewardTier) {
+      // Avoid showing a tier toast at start (tier "0")
+      if (lastRewardTier !== "" && reward.tier !== "0") {
+        showToast("good", "Reward unlocked! 🏆", reward.label);
+      }
+      lastRewardTier = reward.tier;
+    }
   }
 
   async function fetchAllQuestionsOnce() {
@@ -425,16 +423,12 @@
     const correct = letter === q.correct_choice;
     answered.set(q.id, { selected: letter, correct });
 
-    // ✅ Session: user answered 1 question
+    // session answered always +1
     sessionAnswered += 1;
 
     if (correct) {
-      // ✅ Quiz score +1
-      score += 1;
-
-      // ✅ Session total score +1
-      sessionScore += 1;
-
+      score += 1;         // quiz +1
+      sessionScore += 1;  // session +1
       showToast("good", "Congrats! 🎉", "You earned 1 point.");
     } else {
       showToast("bad", "Oops! 😅", `Correct answer: ${q.correct_choice}`);
@@ -460,13 +454,15 @@
 
     const total = questions.length;
     const percent = total ? ((score / total) * 100).toFixed(2) : "0.00";
-
     const msg = Number(percent) >= 75 ? "🎉 Passed! Keep it up!" : "📚 Keep reviewing — you got this!";
+
+    const reward = getReward(sessionScore);
 
     document.getElementById("resultText").innerHTML =
       `<strong>This Quiz:</strong> ${score} / ${total} (${percent}%)<br><br>
        <strong>Session Total Points:</strong> ${sessionScore}<br>
-       <strong>Session Questions Answered:</strong> ${sessionAnswered}<br><br>
+       <strong>Session Questions Answered:</strong> ${sessionAnswered}<br>
+       <strong>Current Reward:</strong> ${reward.label}<br><br>
        ${msg}`;
   }
 
