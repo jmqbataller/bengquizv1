@@ -4,9 +4,26 @@
   <meta charset="UTF-8" />
   <title>Rizal Review Quiz</title>
   <style>
-    body { font-family: Arial; max-width: 800px; margin: 40px auto; padding: 20px; }
-    .question-box { border: 1px solid #ddd; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-    button { padding: 10px; margin: 5px 0; width: 100%; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
+    body {
+      font-family: Arial;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .question-box {
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -22,6 +39,7 @@
 
   const SUPABASE_URL = "https://testkzelancwtyzlzcta.supabase.co";
   const SUPABASE_KEY = "sb_publishable_sVpwVVqwCGtfUHYM5IOkyg_uwzbfBtJ";
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   const startBtn = document.getElementById("startBtn");
@@ -48,7 +66,9 @@
     score = 0;
     currentIndex = 0;
 
-    const { data, error } = await supabase.from("questions").select("*");
+    const { data, error } = await supabase
+      .from("questions")
+      .select("*");
 
     if (error) {
       quizContainer.textContent = "";
@@ -106,10 +126,10 @@
 
   function showScore() {
     quizContainer.innerHTML = "";
-    scoreContainer.innerHTML = `<h2>Your Score: ${score} / ${questions.length}</h2>`;
+    scoreContainer.innerHTML =
+      `<h2>Your Score: ${score} / ${questions.length}</h2>`;
   }
 </script>
 
 </body>
 </html>
-
