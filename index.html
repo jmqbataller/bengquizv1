@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rizal Review Quiz</title>
+
+  <!-- ✅ NEW: jsPDF for PDF receipt generation -->
+  <script defer src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
   <style>
     :root{
       --bg:#0b1220; --text:#e6e9f2; --muted:#aab3c5;
@@ -37,7 +41,7 @@
     .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
     .spacer{flex:1}
     label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
-    select, button, .toggle{
+    select, button, .toggle, input{
       border-radius:12px;
       border:1px solid var(--border);
       background: rgba(15,23,42,.65);
@@ -134,6 +138,35 @@
     .switch.on{background: rgba(34,197,94,.22); border-color: rgba(34,197,94,.35)}
     .switch.on .knob{left:20px; background:#dcfce7}
     .small{font-size:13px;color:var(--muted)}
+
+    /* ✅ NEW: Redeem area */
+    .grid2{display:grid; gap:12px;}
+    @media(min-width: 860px){ .grid2{grid-template-columns: 1.15fr .85fr;} }
+    .box{
+      background: rgba(15,23,42,.45);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:14px;
+    }
+    .list{margin:10px 0 0; padding:0; list-style:none; display:grid; gap:8px;}
+    .item{
+      display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+      padding:10px 12px; border:1px solid var(--border); border-radius:14px;
+      background: rgba(17,26,46,.65);
+    }
+    .item small{color:var(--muted)}
+    iframe{
+      width:100%;
+      height:360px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background: rgba(0,0,0,.2);
+    }
+    a.linkbtn{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding:10px 12px; border-radius:12px; border:1px solid var(--border);
+      background: rgba(15,23,42,.65); color:var(--text); text-decoration:none;
+    }
   </style>
 </head>
 <body>
@@ -178,6 +211,41 @@
     <div id="meta" class="small" style="margin-top:10px;"></div>
   </div>
 
+  <!-- ✅ NEW: Redeem reward area (always visible) -->
+  <div class="card">
+    <div class="grid2">
+      <div class="box">
+        <div class="row" style="justify-content:space-between;">
+          <div class="pills">
+            <span class="pill">Session Score: <strong id="sessionScorePillTop">0</strong></span>
+            <span class="pill">Reward: <strong id="rewardPillTop">—</strong></span>
+          </div>
+          <div class="row">
+            <button class="primary" id="redeemBtnTop" style="width:auto">Redeem Reward</button>
+          </div>
+        </div>
+
+        <div class="small" style="margin-top:10px;">
+          Redemption History
+        </div>
+        <ul class="list" id="redeemList"></ul>
+      </div>
+
+      <div class="box">
+        <div class="row" style="justify-content:space-between; align-items:flex-start;">
+          <div>
+            <div style="font-weight:900;">Receipt Preview (PDF)</div>
+            <div class="small">Click Redeem Reward to generate a receipt.</div>
+          </div>
+          <a class="linkbtn" id="downloadPdfLink" href="#" download="receipt.pdf" style="display:none;">Download PDF</a>
+        </div>
+        <div style="margin-top:10px;">
+          <iframe id="receiptFrame" title="Receipt PDF preview"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="quizArea" style="display:none;">
     <div class="card">
       <div class="row" style="justify-content:space-between;">
@@ -190,7 +258,6 @@
         </div>
 
         <div class="row">
-          <!-- ✅ NEW: Redeem Button -->
           <button id="redeemBtn" class="primary" style="width:auto">Redeem Reward</button>
           <button class="ghost" id="restartBtn" style="width:auto">Restart</button>
           <button class="primary" id="finishBtn" style="width:auto">Finish</button>
@@ -236,7 +303,9 @@
   const restartBtn = document.getElementById("restartBtn");
   const finishBtn = document.getElementById("finishBtn");
   const newQuizBtn = document.getElementById("newQuizBtn");
-  const redeemBtn = document.getElementById("redeemBtn"); // ✅ NEW
+
+  const redeemBtn = document.getElementById("redeemBtn");
+  const redeemBtnTop = document.getElementById("redeemBtnTop");
 
   const meta = document.getElementById("meta");
 
@@ -249,6 +318,13 @@
   const sessionAnsweredPill = document.getElementById("sessionAnsweredPill");
   const rewardPill = document.getElementById("rewardPill");
   const progressBar = document.getElementById("progressBar");
+
+  // ✅ NEW top display
+  const sessionScorePillTop = document.getElementById("sessionScorePillTop");
+  const rewardPillTop = document.getElementById("rewardPillTop");
+  const redeemList = document.getElementById("redeemList");
+  const receiptFrame = document.getElementById("receiptFrame");
+  const downloadPdfLink = document.getElementById("downloadPdfLink");
 
   const questionTitle = document.getElementById("questionTitle");
   const questionText = document.getElementById("questionText");
@@ -264,11 +340,14 @@
   const autoNextSwitch = document.getElementById("autoNextSwitch");
   let autoNext = false;
 
+  // Session totals
   let sessionScore = 0;
   let sessionAnswered = 0;
 
-  let lastRewardTier = "";
-  let lastMilestone = 0; // ✅ NEW: for 49/50/100/150/151+ milestone toasts
+  // ✅ NEW: redemption log
+  let redemptionHistory = []; // {id, date, item, cost, before, after, note}
+
+  let lastMilestone = 0;
 
   let allQuestions = [];
   let questions = [];
@@ -305,18 +384,16 @@
     setTimeout(() => el.remove(), 2050);
   }
 
-  // ✅ Reward mapping + costs (for redeem)
+  // Reward mapping + costs
   function getReward(points) {
-    if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested", cost: null };
+    if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested", cost: 151 };
     if (points >= 150) return { tier: "150", label: "🍽️ Dinner", cost: 150 };
     if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea", cost: 100 };
     if (points >= 50)  return { tier: "50",  label: "🍟 Fries", cost: 50 };
     return { tier: "0-49", label: "🍭 Redeem: 1 pc Lollipop — Keep going!", cost: 1 };
   }
 
-  // ✅ NEW: milestone toast (49 and 50 plus major tiers)
   function maybeMilestoneToast(points) {
-    // fire only when crossing exact values, once per session
     const milestones = [49, 50, 100, 150, 151];
     for (const m of milestones) {
       if (points >= m && lastMilestone < m) {
@@ -330,6 +407,112 @@
     }
   }
 
+  function renderRedeemList(){
+    redeemList.innerHTML = "";
+    if (redemptionHistory.length === 0) {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.innerHTML = `<div><strong>No redemptions yet</strong><br><small>Your receipt will appear here after redeem.</small></div>`;
+      redeemList.appendChild(li);
+      return;
+    }
+
+    // latest first
+    const latest = [...redemptionHistory].reverse().slice(0, 5);
+    for (const r of latest) {
+      const li = document.createElement("li");
+      li.className = "item";
+      li.innerHTML = `
+        <div>
+          <strong>${r.item}</strong><br>
+          <small>${new Date(r.date).toLocaleString()}</small>
+          ${r.note ? `<br><small>Note: ${r.note}</small>` : ""}
+        </div>
+        <div style="text-align:right">
+          <div><strong>- ${r.cost} pts</strong></div>
+          <small>${r.before} → ${r.after}</small>
+        </div>
+      `;
+      redeemList.appendChild(li);
+    }
+  }
+
+  // ✅ NEW: generate PDF and preview it
+  function generateReceiptPDF(receipt){
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) {
+      showToast("bad", "PDF library not loaded", "Reload the page and try again.");
+      return;
+    }
+
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+    const left = 46;
+    let y = 56;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text("Rizal Review Quiz - Redemption Receipt", left, y);
+
+    y += 18;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.text(`Receipt ID: ${receipt.id}`, left, y);
+
+    y += 16;
+    doc.text(`Date: ${new Date(receipt.date).toLocaleString()}`, left, y);
+
+    y += 22;
+    doc.setDrawColor(200);
+    doc.line(left, y, 550, y);
+
+    y += 22;
+    doc.setFont("helvetica", "bold");
+    doc.text("Redeemed Item", left, y);
+    doc.setFont("helvetica", "normal");
+    y += 16;
+    doc.text(`${receipt.item}`, left, y);
+
+    if (receipt.note) {
+      y += 16;
+      doc.setFont("helvetica", "bold");
+      doc.text("Note / Request", left, y);
+      doc.setFont("helvetica", "normal");
+      y += 16;
+      doc.text(doc.splitTextToSize(receipt.note, 520), left, y);
+      y += 10;
+    }
+
+    y += 14;
+    doc.setFont("helvetica", "bold");
+    doc.text("Points", left, y);
+    doc.setFont("helvetica", "normal");
+    y += 16;
+    doc.text(`Cost: ${receipt.cost} point(s)`, left, y);
+    y += 16;
+    doc.text(`Points before: ${receipt.before}`, left, y);
+    y += 16;
+    doc.text(`Points after: ${receipt.after}`, left, y);
+
+    y += 24;
+    doc.setDrawColor(200);
+    doc.line(left, y, 550, y);
+
+    y += 22;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(10);
+    doc.text("Thank you! Keep going and earn more rewards 🎉", left, y);
+
+    // output as blob url for preview
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+
+    receiptFrame.src = url;
+    downloadPdfLink.href = url;
+    downloadPdfLink.style.display = "inline-flex";
+    downloadPdfLink.download = `receipt-${receipt.id}.pdf`;
+  }
+
   function updateSessionUI(){
     sessionScorePill.textContent = String(sessionScore);
     sessionAnsweredPill.textContent = String(sessionAnswered);
@@ -337,73 +520,16 @@
     const reward = getReward(sessionScore);
     rewardPill.textContent = reward.label;
 
-    // ✅ keep redeem button enabled always, but we’ll validate inside redeem()
-    redeemBtn.disabled = sessionScore <= 0;
+    // top
+    sessionScorePillTop.textContent = String(sessionScore);
+    rewardPillTop.textContent = reward.label;
 
-    // reward tier toast (still allowed)
-    if (reward.tier !== lastRewardTier) {
-      if (lastRewardTier !== "" && reward.tier !== "0") {
-        showToast("good", "Reward tier changed! 🏆", reward.label);
-      }
-      lastRewardTier = reward.tier;
-    }
+    const canRedeem = sessionScore > 0;
+    redeemBtn.disabled = !canRedeem;
+    redeemBtnTop.disabled = !canRedeem;
 
-    // ✅ milestone toast
     maybeMilestoneToast(sessionScore);
-  }
-
-  // ✅ NEW: redeem logic (deducts points)
-  function redeemReward() {
-    const reward = getReward(sessionScore);
-
-    if (reward.tier === "0-49") {
-      // lollipop costs 1 point
-      if (sessionScore < 1) {
-        showToast("bad", "Not enough points", "You need at least 1 point to redeem 1 lollipop.");
-        return;
-      }
-      sessionScore -= 1;
-      showToast("good", "Redeemed! 🍭", "You redeemed 1 pc lollipop. Keep going!");
-      updateSessionUI();
-      return;
-    }
-
-    if (reward.tier === "50") {
-      if (sessionScore < 50) { showToast("bad","Not enough points","Need 50 points for Fries."); return; }
-      sessionScore -= 50;
-      showToast("good", "Redeemed! 🍟", "You redeemed Fries! (-50 points)");
-      updateSessionUI();
-      return;
-    }
-
-    if (reward.tier === "100") {
-      if (sessionScore < 100) { showToast("bad","Not enough points","Need 100 points for Fries with milk tea."); return; }
-      sessionScore -= 100;
-      showToast("good", "Redeemed! 🍟🧋", "You redeemed Fries with milk tea! (-100 points)");
-      updateSessionUI();
-      return;
-    }
-
-    if (reward.tier === "150") {
-      if (sessionScore < 150) { showToast("bad","Not enough points","Need 150 points for Dinner."); return; }
-      sessionScore -= 150;
-      showToast("good", "Redeemed! 🍽️", "You redeemed Dinner! (-150 points)");
-      updateSessionUI();
-      return;
-    }
-
-    // 151+ = request anything
-    if (reward.tier === "151+") {
-      const wish = prompt("🎁 What do you want to request/redeem?");
-      if (!wish || !wish.trim()) {
-        showToast("bad", "Canceled", "No request entered.");
-        return;
-      }
-      showToast("good", "Request saved ✅", `Requested: ${wish.trim()}`);
-      // optional: you can deduct points here if you want (ex: -151), but you didn’t specify.
-      updateSessionUI();
-      return;
-    }
+    renderRedeemList();
   }
 
   async function fetchAllQuestionsOnce() {
@@ -525,6 +651,50 @@
     }
   }
 
+  // ✅ NEW: redeem + create receipt + PDF preview
+  function redeemReward() {
+    const reward = getReward(sessionScore);
+
+    if (sessionScore < reward.cost) {
+      showToast("bad", "Not enough points", `You need at least ${reward.cost} points.`);
+      return;
+    }
+
+    let note = "";
+    let item = reward.label;
+
+    // For 151+ tier, user can type request (still costs 151 points)
+    if (reward.tier === "151+") {
+      const wish = prompt("🎁 What do you want to request/redeem? (This will deduct 151 points)");
+      if (!wish || !wish.trim()) {
+        showToast("bad", "Canceled", "No request entered.");
+        return;
+      }
+      note = wish.trim();
+      item = "🎁 Request Reward";
+    }
+
+    const before = sessionScore;
+    sessionScore -= reward.cost;
+    const after = sessionScore;
+
+    const receipt = {
+      id: crypto.randomUUID ? crypto.randomUUID().slice(0,8).toUpperCase() : String(Date.now()),
+      date: new Date().toISOString(),
+      item,
+      cost: reward.cost,
+      before,
+      after,
+      note
+    };
+
+    redemptionHistory.push(receipt);
+
+    showToast("good", "Redeemed! ✅", `Receipt generated: ${receipt.id}`);
+    updateSessionUI();
+    generateReceiptPDF(receipt);
+  }
+
   function finishQuiz() {
     quizArea.style.display = "none";
     resultArea.style.display = "block";
@@ -570,8 +740,9 @@
   finishBtn.addEventListener("click", finishQuiz);
   newQuizBtn.addEventListener("click", startQuiz);
 
-  // ✅ NEW: redeem click
+  // redeem buttons (both top and inside quiz)
   redeemBtn.addEventListener("click", redeemReward);
+  redeemBtnTop.addEventListener("click", redeemReward);
 
   prevBtn.addEventListener("click", () => { if (index > 0) { index--; renderQuestion(); } });
   nextBtn.addEventListener("click", () => { if (index < questions.length - 1) { index++; renderQuestion(); } });
