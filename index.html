@@ -5,82 +5,301 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Rizal Review Quiz</title>
   <style>
-    body { font-family: Arial; max-width: 900px; margin: 30px auto; padding: 16px; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin: 12px 0; }
-    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    button, select {
-      padding: 10px; border-radius: 10px; border: 1px solid #ccc; cursor: pointer;
+    :root{
+      --bg:#0b1220;
+      --card:#111a2e;
+      --card2:#0f172a;
+      --text:#e6e9f2;
+      --muted:#aab3c5;
+      --border:rgba(255,255,255,.10);
+      --accent:#7c5cff;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --shadow: 0 12px 30px rgba(0,0,0,.35);
     }
-    button { width: 100%; }
-    button.primary { background:#111; color:#fff; border-color:#111; }
-    .question-box { border: 1px solid #ddd; padding: 16px; border-radius: 12px; }
-    .muted { color:#666; font-size: 14px; }
-    .pill { display:inline-block; padding:6px 10px; border:1px solid #ddd; border-radius:999px; font-size:13px; }
-    @media (min-width: 640px) {
-      button.choice { width: 100%; }
-      button.primary { width: auto; }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: radial-gradient(900px 500px at 20% 0%, rgba(124,92,255,.25), transparent 60%),
+                  radial-gradient(700px 500px at 90% 30%, rgba(34,197,94,.16), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding:18px;
     }
+
+    .wrap{max-width:980px;margin:0 auto}
+    .title{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;
+      margin:8px 0 12px;
+    }
+    h1{margin:0;font-size:28px;letter-spacing:.2px}
+    .subtitle{margin:6px 0 0;color:var(--muted);font-size:14px}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      margin:12px 0;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
+    .spacer{flex:1}
+
+    label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
+
+    select, button, .toggle{
+      border-radius:12px;
+      border:1px solid var(--border);
+      background: rgba(15,23,42,.65);
+      color:var(--text);
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+    }
+    select{min-width:220px}
+    button{cursor:pointer; transition: transform .06s ease, filter .2s ease, background .2s ease;}
+    button:active{transform: scale(.99)}
+    button.primary{
+      background: linear-gradient(135deg, var(--accent), #4fd1c5);
+      border-color: transparent;
+      color:#081019;
+      font-weight:700;
+    }
+    button.ghost{
+      background: transparent;
+    }
+    button:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .pills{display:flex; gap:10px; flex-wrap:wrap}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 12px;
+      border:1px solid var(--border);
+      background: rgba(15,23,42,.55);
+      border-radius:999px;
+      font-size:13px;
+      color:var(--text);
+    }
+
+    /* Progress bar */
+    .bar{
+      width:100%;
+      height:10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(15,23,42,.55);
+      overflow:hidden;
+      margin-top:10px;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, var(--accent), #4fd1c5);
+      border-radius:999px;
+      transition: width .35s ease;
+    }
+
+    .question-box{
+      background: rgba(15,23,42,.45);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+    }
+    .qhead{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .qtitle{margin:0;font-size:16px;color:var(--muted)}
+    .qtext{margin:0;font-size:18px;line-height:1.45}
+
+    .choices{
+      display:grid;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .choice{
+      text-align:left;
+      width:100%;
+      padding:12px 14px;
+      border-radius:14px;
+      background: rgba(17,26,46,.75);
+      border:1px solid var(--border);
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .choice:hover{filter: brightness(1.10)}
+    .choice .key{
+      flex:0 0 auto;
+      width:28px;height:28px;border-radius:10px;
+      display:grid;place-items:center;
+      background: rgba(124,92,255,.16);
+      border:1px solid rgba(124,92,255,.25);
+      font-weight:800;
+      color:#d9d2ff;
+    }
+    .choice.correct{
+      border-color: rgba(34,197,94,.55);
+      box-shadow: 0 0 0 3px rgba(34,197,94,.12);
+    }
+    .choice.wrong{
+      border-color: rgba(239,68,68,.55);
+      box-shadow: 0 0 0 3px rgba(239,68,68,.12);
+    }
+
+    .feedback{
+      margin-top:12px;
+      color:var(--muted);
+      font-size:14px;
+      min-height:18px;
+    }
+
+    /* Toast */
+    .toast-wrap{
+      position: fixed;
+      top: 14px;
+      right: 14px;
+      display: grid;
+      gap: 10px;
+      z-index: 9999;
+    }
+    .toast{
+      width: min(360px, calc(100vw - 28px));
+      background: rgba(15,23,42,.92);
+      border:1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 12px;
+      box-shadow: var(--shadow);
+      display:flex; gap:10px; align-items:flex-start;
+      animation: in .18s ease-out;
+    }
+    @keyframes in{
+      from{transform: translateY(-6px); opacity:0}
+      to{transform: translateY(0); opacity:1}
+    }
+    .dot{
+      width:10px;height:10px;border-radius:999px;margin-top:4px;
+      background: var(--accent);
+    }
+    .toast.good .dot{background: var(--good)}
+    .toast.bad .dot{background: var(--bad)}
+    .toast .t-title{font-weight:800;margin:0 0 2px 0}
+    .toast .t-sub{margin:0;color:var(--muted);font-size:13px}
+
+    /* Toggle */
+    .toggle{
+      display:flex; gap:10px; align-items:center;
+      padding:10px 12px;
+    }
+    .switch{
+      width:44px;height:26px;border-radius:999px;
+      background: rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      position:relative;
+      flex:0 0 auto;
+    }
+    .knob{
+      width:20px;height:20px;border-radius:999px;
+      background: #fff;
+      position:absolute; top:2.5px; left:3px;
+      transition: left .2s ease, background .2s ease;
+    }
+    .switch.on{background: rgba(34,197,94,.22); border-color: rgba(34,197,94,.35)}
+    .switch.on .knob{left:20px; background:#dcfce7}
+    .small{font-size:13px;color:var(--muted)}
   </style>
 </head>
 <body>
+<div class="wrap">
 
-<h1>Rizal Review Quiz</h1>
-<p class="muted">Randomized questions from Supabase. Choose how many questions you want.</p>
-
-<div class="card">
-  <div class="row">
-    <div style="min-width:220px">
-      <div class="muted">Number of Questions</div>
-      <select id="limitSelect">
-        <option value="30">30 questions</option>
-        <option value="50">50 questions</option>
-        <option value="80">80 questions</option>
-        <option value="120">120 questions</option>
-        <option value="all">All Questions (Total Quantity)</option>
-      </select>
-    </div>
-
-    <div style="flex:1"></div>
-
-    <button class="primary" id="startBtn" style="min-width:140px">Start Quiz</button>
-  </div>
-
-  <div id="meta" class="muted" style="margin-top:10px;"></div>
-</div>
-
-<div id="quizArea" style="display:none;">
-  <div class="card">
-    <div class="row" style="justify-content:space-between;">
-      <div class="row">
-        <span class="pill" id="progressPill">Question 1 / 1</span>
-        <span class="pill" id="scorePill">Score: 0</span>
-      </div>
-      <div class="row">
-        <button id="restartBtn" style="width:auto">Restart</button>
-        <button class="primary" id="finishBtn" style="width:auto">Finish</button>
-      </div>
+  <div class="title">
+    <div>
+      <h1>Rizal Review Quiz</h1>
+      <div class="subtitle">Randomized questions from Supabase. Choose how many questions you want.</div>
     </div>
   </div>
+
+  <!-- Toasts -->
+  <div class="toast-wrap" id="toastWrap"></div>
 
   <div class="card">
-    <div class="question-box">
-      <h3 id="questionTitle" style="margin:0 0 10px 0;"></h3>
-      <p id="questionText" style="margin:0 0 12px 0;"></p>
-      <div id="choices"></div>
-      <div id="feedback" class="muted" style="margin-top:10px;"></div>
+    <div class="row">
+      <div>
+        <label for="limitSelect">Number of Questions</label>
+        <select id="limitSelect">
+          <option value="30">30 questions</option>
+          <option value="50">50 questions</option>
+          <option value="80">80 questions</option>
+          <option value="120">120 questions</option>
+          <option value="all">All Questions (Total Quantity)</option>
+        </select>
+      </div>
+
+      <div class="toggle" id="autoNextToggle" style="min-width:220px">
+        <div class="switch" id="autoNextSwitch" aria-label="Auto next">
+          <div class="knob"></div>
+        </div>
+        <div>
+          <div style="font-weight:700">Auto Next</div>
+          <div class="small">After answering, go next</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+      <button class="primary" id="startBtn" style="min-width:150px">Start Quiz</button>
+    </div>
+
+    <div id="meta" class="small" style="margin-top:10px;"></div>
+  </div>
+
+  <div id="quizArea" style="display:none;">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div class="pills">
+          <span class="pill" id="progressPill">Question 1 / 1</span>
+          <span class="pill" id="scorePill">Score: 0</span>
+        </div>
+        <div class="row">
+          <button class="ghost" id="restartBtn" style="width:auto">Restart</button>
+          <button class="primary" id="finishBtn" style="width:auto">Finish</button>
+        </div>
+      </div>
+      <div class="bar"><div id="progressBar"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="question-box">
+        <div class="qhead">
+          <p class="qtitle" id="questionTitle"></p>
+        </div>
+        <p class="qtext" id="questionText"></p>
+        <div class="choices" id="choices"></div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    </div>
+
+    <div class="card row" style="justify-content:space-between;">
+      <button class="ghost" id="prevBtn" style="width:auto">← Previous</button>
+      <button class="primary" id="nextBtn" style="width:auto">Next →</button>
     </div>
   </div>
 
-  <div class="card row" style="justify-content:space-between;">
-    <button id="prevBtn" style="width:auto">← Previous</button>
-    <button id="nextBtn" class="primary" style="width:auto">Next →</button>
+  <div id="resultArea" class="card" style="display:none;">
+    <h2 style="margin-top:0">Result</h2>
+    <p id="resultText" class="small"></p>
+    <button class="primary" id="newQuizBtn" style="width:auto">New Quiz</button>
   </div>
-</div>
 
-<div id="resultArea" class="card" style="display:none;">
-  <h2>Result</h2>
-  <p id="resultText"></p>
-  <button class="primary" id="newQuizBtn" style="width:auto">New Quiz</button>
 </div>
 
 <script type="module">
@@ -103,6 +322,7 @@
 
   const progressPill = document.getElementById("progressPill");
   const scorePill = document.getElementById("scorePill");
+  const progressBar = document.getElementById("progressBar");
 
   const questionTitle = document.getElementById("questionTitle");
   const questionText = document.getElementById("questionText");
@@ -111,6 +331,12 @@
 
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
+
+  const toastWrap = document.getElementById("toastWrap");
+
+  const autoNextToggle = document.getElementById("autoNextToggle");
+  const autoNextSwitch = document.getElementById("autoNextSwitch");
+  let autoNext = false;
 
   let allQuestions = [];
   let questions = [];
@@ -126,13 +352,34 @@
     return arr;
   }
 
+  function showToast(type, title, subtitle) {
+    const el = document.createElement("div");
+    el.className = `toast ${type}`;
+    el.innerHTML = `
+      <div class="dot"></div>
+      <div>
+        <p class="t-title">${title}</p>
+        <p class="t-sub">${subtitle || ""}</p>
+      </div>
+    `;
+    toastWrap.appendChild(el);
+
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(-4px)";
+      el.style.transition = "all .2s ease";
+    }, 1800);
+
+    setTimeout(() => el.remove(), 2050);
+  }
+
   async function fetchAllQuestionsOnce() {
     meta.textContent = "Loading total questions...";
     const { data, error } = await supabase.from("questions").select("*");
 
     if (error) {
       meta.textContent = "";
-      alert("Error loading questions. Check Console (F12).");
+      showToast("bad", "Cannot load questions", "Check Supabase RLS / key");
       console.error(error);
       return false;
     }
@@ -165,10 +412,14 @@
     const q = questions[index];
     if (!q) return;
 
-    progressPill.textContent = `Question ${index + 1} / ${questions.length}`;
-    scorePill.textContent = `Score: ${score}`;
+    const total = questions.length;
+    const current = index + 1;
 
-    questionTitle.textContent = `Question ${index + 1}`;
+    progressPill.textContent = `Question ${current} / ${total}`;
+    scorePill.textContent = `Score: ${score}`;
+    progressBar.style.width = `${Math.round((current / total) * 100)}%`;
+
+    questionTitle.textContent = `Question ${current}`;
     questionText.textContent = q.question;
 
     const options = [
@@ -186,10 +437,19 @@
     for (const opt of options) {
       const btn = document.createElement("button");
       btn.className = "choice";
-      btn.textContent = `${opt.key}. ${opt.text}`;
+      btn.type = "button";
+      btn.innerHTML = `
+        <div class="key">${opt.key}</div>
+        <div>${opt.text}</div>
+      `;
 
-      // lock if already answered
-      if (saved) btn.disabled = true;
+      if (saved) {
+        btn.disabled = true;
+
+        // highlight correct + wrong selection
+        if (opt.key === q.correct_choice) btn.classList.add("correct");
+        if (opt.key === saved.selected && !saved.correct) btn.classList.add("wrong");
+      }
 
       btn.addEventListener("click", () => selectAnswer(opt.key));
       choicesDiv.appendChild(btn);
@@ -197,12 +457,12 @@
 
     if (saved) {
       feedback.textContent = saved.correct
-        ? "✅ Correct!"
+        ? "✅ Correct! Great job."
         : `❌ Wrong. Correct answer is ${q.correct_choice}.`;
     }
 
     prevBtn.disabled = index === 0;
-    nextBtn.disabled = index === questions.length - 1;
+    nextBtn.disabled = index === total - 1;
   }
 
   function selectAnswer(letter) {
@@ -213,15 +473,42 @@
     const correct = letter === q.correct_choice;
     answered.set(q.id, { selected: letter, correct });
 
-    if (correct) score += 1;
+    if (correct) {
+      score += 1;
+      showToast("good", "Congrats! 🎉", "You earned 1 point.");
+    } else {
+      showToast("bad", "Oops! 😅", `Correct answer: ${q.correct_choice}`);
+    }
 
     renderQuestion();
+
+    if (autoNext) {
+      setTimeout(() => {
+        if (index < questions.length - 1) {
+          index++;
+          renderQuestion();
+        } else {
+          finishQuiz();
+        }
+      }, 900);
+    }
   }
 
   function finishQuiz() {
     quizArea.style.display = "none";
     resultArea.style.display = "block";
-    resultText.textContent = `You scored ${score} out of ${questions.length}.`;
+
+    const total = questions.length;
+    const percent = total ? ((score / total) * 100).toFixed(2) : "0.00";
+
+    const msg = Number(percent) >= 75
+      ? "🎉 Passed! Keep it up!"
+      : "📚 Keep reviewing — you got this!";
+
+    document.getElementById("resultText").innerHTML =
+      `<strong>Score:</strong> ${score} / ${total} <br>
+       <strong>Percentage:</strong> ${percent}% <br><br>
+       ${msg}`;
   }
 
   async function startQuiz() {
@@ -229,24 +516,23 @@
     quizArea.style.display = "none";
     resetState();
 
-    // fetch all questions once (for total count + random selection)
     if (allQuestions.length === 0) {
       const ok = await fetchAllQuestionsOnce();
       if (!ok) return;
     }
 
     questions = pickQuestions();
-
     if (questions.length === 0) {
-      alert("No questions found in the database.");
+      showToast("bad", "No questions found", "Upload questions first");
       return;
     }
 
     quizArea.style.display = "block";
+    showToast("good", "Quiz started!", `Good luck — ${questions.length} questions`);
     renderQuestion();
   }
 
-  // buttons
+  // UI controls
   startBtn.addEventListener("click", startQuiz);
   restartBtn.addEventListener("click", startQuiz);
   finishBtn.addEventListener("click", finishQuiz);
@@ -255,7 +541,13 @@
   prevBtn.addEventListener("click", () => { if (index > 0) { index--; renderQuestion(); } });
   nextBtn.addEventListener("click", () => { if (index < questions.length - 1) { index++; renderQuestion(); } });
 
-  // show total count on load
+  autoNextToggle.addEventListener("click", () => {
+    autoNext = !autoNext;
+    autoNextSwitch.classList.toggle("on", autoNext);
+    showToast("good", "Auto Next", autoNext ? "Enabled" : "Disabled");
+  });
+
+  // load total count
   fetchAllQuestionsOnce();
 </script>
 
