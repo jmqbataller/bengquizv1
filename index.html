@@ -3,117 +3,111 @@
 <head>
   <meta charset="UTF-8" />
   <title>Rizal Review Quiz</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    body {
-      font-family: Arial;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 20px;
-    }
-    .question-box {
-      border: 1px solid #ddd;
-      padding: 20px;
-      border-radius: 10px;
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      cursor: pointer;
-    }
-    .correct { background-color: #d4edda; }
-    .wrong { background-color: #f8d7da; }
+    body { font-family: Arial; max-width: 800px; margin: 40px auto; padding: 20px; }
+    .question-box { border: 1px solid #ddd; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
+    button { padding: 10px; margin: 5px 0; width: 100%; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
   </style>
 </head>
 <body>
 
 <h1>Rizal Review Quiz</h1>
-<button onclick="startQuiz()">Start Quiz</button>
+<button id="startBtn">Start Quiz</button>
 
 <div id="quizContainer"></div>
 <div id="scoreContainer"></div>
 
-<script>
-const SUPABASE_URL = "https://testkzelancwtyzlzcta.supabase.co";
-const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3RremVsYW5jd3R5emx6Y3RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzgzMDcsImV4cCI6MjA4Njc1NDMwN30.psWkPRbCJp7jbDEQRXKaFV_idQq-e65m-FhZ-x6kpv0";
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const SUPABASE_URL = "https://testkzelancwtyzlzcta.supabase.co";
+  const SUPABASE_KEY = "PASTE_YOUR_PUBLISHABLE_KEY_OR_ANON_JWT_HERE";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let questions = [];
-let currentIndex = 0;
-let score = 0;
+  const startBtn = document.getElementById("startBtn");
+  const quizContainer = document.getElementById("quizContainer");
+  const scoreContainer = document.getElementById("scoreContainer");
 
-function shuffle(array) {
-  for (let i = array.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [array[i], array[j]] = [array[j], array[i]];
-  }
-  return array;
-}
+  let questions = [];
+  let currentIndex = 0;
+  let score = 0;
 
-async function startQuiz() {
-  document.getElementById("scoreContainer").innerHTML = "";
-  score = 0;
-  currentIndex = 0;
-
-  const { data, error } = await supabase
-    .from("questions")
-    .select("*");
-
-  if (error) {
-    alert("Error loading questions");
-    console.error(error);
-    return;
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
   }
 
-  questions = shuffle(data);
-  showQuestion();
-}
+  startBtn.addEventListener("click", startQuiz);
 
-function showQuestion() {
-  if (currentIndex >= questions.length) {
-    showScore();
-    return;
+  async function startQuiz() {
+    scoreContainer.textContent = "";
+    quizContainer.textContent = "Loading questions...";
+    score = 0;
+    currentIndex = 0;
+
+    const { data, error } = await supabase.from("questions").select("*");
+
+    if (error) {
+      quizContainer.textContent = "";
+      alert("Error loading questions. Check Console (F12).");
+      console.error(error);
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      quizContainer.textContent = "No questions found in table.";
+      return;
+    }
+
+    questions = shuffle(data);
+    showQuestion();
   }
 
-  const q = questions[currentIndex];
+  function showQuestion() {
+    if (currentIndex >= questions.length) {
+      showScore();
+      return;
+    }
 
-  const container = document.getElementById("quizContainer");
-  container.innerHTML = `
-    <div class="question-box">
-      <h3>Question ${currentIndex + 1}</h3>
-      <p>${q.question}</p>
-      <button onclick="checkAnswer('A')">A. ${q.choice_a}</button>
-      <button onclick="checkAnswer('B')">B. ${q.choice_b}</button>
-      <button onclick="checkAnswer('C')">C. ${q.choice_c}</button>
-      <button onclick="checkAnswer('D')">D. ${q.choice_d}</button>
-    </div>
-  `;
-}
+    const q = questions[currentIndex];
 
-function checkAnswer(selected) {
-  const correct = questions[currentIndex].correct_choice;
+    quizContainer.innerHTML = `
+      <div class="question-box">
+        <h3>Question ${currentIndex + 1} / ${questions.length}</h3>
+        <p>${q.question}</p>
+        <button data-choice="A">A. ${q.choice_a}</button>
+        <button data-choice="B">B. ${q.choice_b}</button>
+        <button data-choice="C">C. ${q.choice_c}</button>
+        <button data-choice="D">D. ${q.choice_d}</button>
+      </div>
+    `;
 
-  if (selected === correct) {
-    score++;
-    alert("Correct!");
-  } else {
-    alert("Wrong! Correct answer is " + correct);
+    quizContainer.querySelectorAll("button[data-choice]").forEach(btn => {
+      btn.addEventListener("click", () => checkAnswer(btn.dataset.choice));
+    });
   }
 
-  currentIndex++;
-  showQuestion();
-}
+  function checkAnswer(selected) {
+    const correct = questions[currentIndex].correct_choice;
 
-function showScore() {
-  document.getElementById("quizContainer").innerHTML = "";
-  document.getElementById("scoreContainer").innerHTML =
-    "<h2>Your Score: " + score + " / " + questions.length + "</h2>";
-}
+    if (selected === correct) {
+      score++;
+      alert("Correct!");
+    } else {
+      alert("Wrong! Correct answer is " + correct);
+    }
+
+    currentIndex++;
+    showQuestion();
+  }
+
+  function showScore() {
+    quizContainer.innerHTML = "";
+    scoreContainer.innerHTML = `<h2>Your Score: ${score} / ${questions.length}</h2>`;
+  }
 </script>
 
 </body>
