@@ -188,7 +188,10 @@
           <span class="pill">Session Answered: <strong id="sessionAnsweredPill">0</strong></span>
           <span class="pill">Reward: <strong id="rewardPill">—</strong></span>
         </div>
+
         <div class="row">
+          <!-- ✅ NEW: Redeem Button -->
+          <button id="redeemBtn" class="primary" style="width:auto">Redeem Reward</button>
           <button class="ghost" id="restartBtn" style="width:auto">Restart</button>
           <button class="primary" id="finishBtn" style="width:auto">Finish</button>
         </div>
@@ -233,6 +236,7 @@
   const restartBtn = document.getElementById("restartBtn");
   const finishBtn = document.getElementById("finishBtn");
   const newQuizBtn = document.getElementById("newQuizBtn");
+  const redeemBtn = document.getElementById("redeemBtn"); // ✅ NEW
 
   const meta = document.getElementById("meta");
 
@@ -260,18 +264,17 @@
   const autoNextSwitch = document.getElementById("autoNextSwitch");
   let autoNext = false;
 
-  // ✅ Session totals (do NOT reset on restart)
   let sessionScore = 0;
   let sessionAnswered = 0;
 
-  // Reward tier tracking (so we can toast when user reaches a new tier)
   let lastRewardTier = "";
+  let lastMilestone = 0; // ✅ NEW: for 49/50/100/150/151+ milestone toasts
 
   let allQuestions = [];
   let questions = [];
   let index = 0;
   let score = 0;
-  let answered = new Map(); // questionId -> { selected, correct }
+  let answered = new Map();
 
   function shuffle(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -302,17 +305,30 @@
     setTimeout(() => el.remove(), 2050);
   }
 
-  // ✅ Convert points -> reward
-function getReward(points) {
-  if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested" };
-  if (points >= 150) return { tier: "150", label: "🍽️ Dinner" };
-  if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea" };
-  if (points >= 50)  return { tier: "50",  label: "🍟 Fries" };
+  // ✅ Reward mapping + costs (for redeem)
+  function getReward(points) {
+    if (points >= 151) return { tier: "151+", label: "🎁 Whatever you want / requested", cost: null };
+    if (points >= 150) return { tier: "150", label: "🍽️ Dinner", cost: 150 };
+    if (points >= 100) return { tier: "100", label: "🍟🧋 Fries with milk tea", cost: 100 };
+    if (points >= 50)  return { tier: "50",  label: "🍟 Fries", cost: 50 };
+    return { tier: "0-49", label: "🍭 Redeem: 1 pc Lollipop — Keep going!", cost: 1 };
+  }
 
-  // ✅ NEW RULE for 0–49
-  return { tier: "0-49", label: "🍭 Redeem: 1 pc Lollipop — Keep going!" };
-}
-
+  // ✅ NEW: milestone toast (49 and 50 plus major tiers)
+  function maybeMilestoneToast(points) {
+    // fire only when crossing exact values, once per session
+    const milestones = [49, 50, 100, 150, 151];
+    for (const m of milestones) {
+      if (points >= m && lastMilestone < m) {
+        lastMilestone = m;
+        if (m === 49) showToast("good", "Almost there! 🔥", "You hit 49 points — 1 more for Fries!");
+        else if (m === 50) showToast("good", "Nice! 🍟", "50 points unlocked — Fries available to redeem!");
+        else if (m === 100) showToast("good", "Amazing! 🧋", "100 points unlocked — Fries with milk tea!");
+        else if (m === 150) showToast("good", "Legend! 🍽️", "150 points unlocked — Dinner!");
+        else if (m === 151) showToast("good", "Boss level! 🎁", "151+ points — request anything you want!");
+      }
+    }
+  }
 
   function updateSessionUI(){
     sessionScorePill.textContent = String(sessionScore);
@@ -321,13 +337,72 @@ function getReward(points) {
     const reward = getReward(sessionScore);
     rewardPill.textContent = reward.label;
 
-    // toast only when user reaches a new tier
+    // ✅ keep redeem button enabled always, but we’ll validate inside redeem()
+    redeemBtn.disabled = sessionScore <= 0;
+
+    // reward tier toast (still allowed)
     if (reward.tier !== lastRewardTier) {
-      // Avoid showing a tier toast at start (tier "0")
       if (lastRewardTier !== "" && reward.tier !== "0") {
-        showToast("good", "Reward unlocked! 🏆", reward.label);
+        showToast("good", "Reward tier changed! 🏆", reward.label);
       }
       lastRewardTier = reward.tier;
+    }
+
+    // ✅ milestone toast
+    maybeMilestoneToast(sessionScore);
+  }
+
+  // ✅ NEW: redeem logic (deducts points)
+  function redeemReward() {
+    const reward = getReward(sessionScore);
+
+    if (reward.tier === "0-49") {
+      // lollipop costs 1 point
+      if (sessionScore < 1) {
+        showToast("bad", "Not enough points", "You need at least 1 point to redeem 1 lollipop.");
+        return;
+      }
+      sessionScore -= 1;
+      showToast("good", "Redeemed! 🍭", "You redeemed 1 pc lollipop. Keep going!");
+      updateSessionUI();
+      return;
+    }
+
+    if (reward.tier === "50") {
+      if (sessionScore < 50) { showToast("bad","Not enough points","Need 50 points for Fries."); return; }
+      sessionScore -= 50;
+      showToast("good", "Redeemed! 🍟", "You redeemed Fries! (-50 points)");
+      updateSessionUI();
+      return;
+    }
+
+    if (reward.tier === "100") {
+      if (sessionScore < 100) { showToast("bad","Not enough points","Need 100 points for Fries with milk tea."); return; }
+      sessionScore -= 100;
+      showToast("good", "Redeemed! 🍟🧋", "You redeemed Fries with milk tea! (-100 points)");
+      updateSessionUI();
+      return;
+    }
+
+    if (reward.tier === "150") {
+      if (sessionScore < 150) { showToast("bad","Not enough points","Need 150 points for Dinner."); return; }
+      sessionScore -= 150;
+      showToast("good", "Redeemed! 🍽️", "You redeemed Dinner! (-150 points)");
+      updateSessionUI();
+      return;
+    }
+
+    // 151+ = request anything
+    if (reward.tier === "151+") {
+      const wish = prompt("🎁 What do you want to request/redeem?");
+      if (!wish || !wish.trim()) {
+        showToast("bad", "Canceled", "No request entered.");
+        return;
+      }
+      showToast("good", "Request saved ✅", `Requested: ${wish.trim()}`);
+      // optional: you can deduct points here if you want (ex: -151), but you didn’t specify.
+      updateSessionUI();
+      return;
     }
   }
 
@@ -349,7 +424,7 @@ function getReward(points) {
 
   function pickQuestions() {
     const chosen = limitSelect.value;
-    const shuffled = shuffle([...allQuestions]); // shuffle copy
+    const shuffled = shuffle([...allQuestions]);
     if (chosen === "all") return shuffled;
 
     const n = Math.max(1, Number(chosen));
@@ -426,12 +501,11 @@ function getReward(points) {
     const correct = letter === q.correct_choice;
     answered.set(q.id, { selected: letter, correct });
 
-    // session answered always +1
     sessionAnswered += 1;
 
     if (correct) {
-      score += 1;         // quiz +1
-      sessionScore += 1;  // session +1
+      score += 1;
+      sessionScore += 1;
       showToast("good", "Congrats! 🎉", "You earned 1 point.");
     } else {
       showToast("bad", "Oops! 😅", `Correct answer: ${q.correct_choice}`);
@@ -458,7 +532,6 @@ function getReward(points) {
     const total = questions.length;
     const percent = total ? ((score / total) * 100).toFixed(2) : "0.00";
     const msg = Number(percent) >= 75 ? "🎉 Passed! Keep it up!" : "📚 Keep reviewing — you got this!";
-
     const reward = getReward(sessionScore);
 
     document.getElementById("resultText").innerHTML =
@@ -497,6 +570,9 @@ function getReward(points) {
   finishBtn.addEventListener("click", finishQuiz);
   newQuizBtn.addEventListener("click", startQuiz);
 
+  // ✅ NEW: redeem click
+  redeemBtn.addEventListener("click", redeemReward);
+
   prevBtn.addEventListener("click", () => { if (index > 0) { index--; renderQuestion(); } });
   nextBtn.addEventListener("click", () => { if (index < questions.length - 1) { index++; renderQuestion(); } });
 
@@ -513,4 +589,3 @@ function getReward(points) {
 
 </body>
 </html>
-
