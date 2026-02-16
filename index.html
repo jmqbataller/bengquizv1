@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Rizal Review Quiz</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: Arial;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+    }
+    .question-box {
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      cursor: pointer;
+    }
+    .correct { background-color: #d4edda; }
+    .wrong { background-color: #f8d7da; }
+  </style>
+</head>
+<body>
+
+<h1>Rizal Review Quiz</h1>
+<button onclick="startQuiz()">Start Quiz</button>
+
+<div id="quizContainer"></div>
+<div id="scoreContainer"></div>
+
+<script>
+const SUPABASE_URL = "https://testkzelancwtyzlzcta.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRlc3RremVsYW5jd3R5emx6Y3RhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzExNzgzMDcsImV4cCI6MjA4Njc1NDMwN30.psWkPRbCJp7jbDEQRXKaFV_idQq-e65m-FhZ-x6kpv0";
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let questions = [];
+let currentIndex = 0;
+let score = 0;
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+async function startQuiz() {
+  document.getElementById("scoreContainer").innerHTML = "";
+  score = 0;
+  currentIndex = 0;
+
+  const { data, error } = await supabase
+    .from("questions")
+    .select("*");
+
+  if (error) {
+    alert("Error loading questions");
+    console.error(error);
+    return;
+  }
+
+  questions = shuffle(data);
+  showQuestion();
+}
+
+function showQuestion() {
+  if (currentIndex >= questions.length) {
+    showScore();
+    return;
+  }
+
+  const q = questions[currentIndex];
+
+  const container = document.getElementById("quizContainer");
+  container.innerHTML = `
+    <div class="question-box">
+      <h3>Question ${currentIndex + 1}</h3>
+      <p>${q.question}</p>
+      <button onclick="checkAnswer('A')">A. ${q.choice_a}</button>
+      <button onclick="checkAnswer('B')">B. ${q.choice_b}</button>
+      <button onclick="checkAnswer('C')">C. ${q.choice_c}</button>
+      <button onclick="checkAnswer('D')">D. ${q.choice_d}</button>
+    </div>
+  `;
+}
+
+function checkAnswer(selected) {
+  const correct = questions[currentIndex].correct_choice;
+
+  if (selected === correct) {
+    score++;
+    alert("Correct!");
+  } else {
+    alert("Wrong! Correct answer is " + correct);
+  }
+
+  currentIndex++;
+  showQuestion();
+}
+
+function showScore() {
+  document.getElementById("quizContainer").innerHTML = "";
+  document.getElementById("scoreContainer").innerHTML =
+    "<h2>Your Score: " + score + " / " + questions.length + "</h2>";
+}
+</script>
+
+</body>
+</html>
