@@ -8,7 +8,6 @@
     :root{
       --bg:#0b1220;
       --card:#111a2e;
-      --card2:#0f172a;
       --text:#e6e9f2;
       --muted:#aab3c5;
       --border:rgba(255,255,255,.10);
@@ -17,7 +16,6 @@
       --bad:#ef4444;
       --shadow: 0 12px 30px rgba(0,0,0,.35);
     }
-
     *{box-sizing:border-box}
     body{
       margin:0;
@@ -29,12 +27,8 @@
       min-height:100vh;
       padding:18px;
     }
-
     .wrap{max-width:980px;margin:0 auto}
-    .title{
-      display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;
-      margin:8px 0 12px;
-    }
+    .title{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin:8px 0 12px;}
     h1{margin:0;font-size:28px;letter-spacing:.2px}
     .subtitle{margin:6px 0 0;color:var(--muted);font-size:14px}
 
@@ -47,10 +41,8 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(10px);
     }
-
     .row{display:flex; gap:12px; flex-wrap:wrap; align-items:center;}
     .spacer{flex:1}
-
     label{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}
 
     select, button, .toggle{
@@ -69,15 +61,10 @@
       background: linear-gradient(135deg, var(--accent), #4fd1c5);
       border-color: transparent;
       color:#081019;
-      font-weight:700;
+      font-weight:800;
     }
-    button.ghost{
-      background: transparent;
-    }
-    button:disabled{
-      opacity:.55;
-      cursor:not-allowed;
-    }
+    button.ghost{background: transparent;}
+    button:disabled{opacity:.55;cursor:not-allowed;}
 
     .pills{display:flex; gap:10px; flex-wrap:wrap}
     .pill{
@@ -89,8 +76,8 @@
       font-size:13px;
       color:var(--text);
     }
+    .pill strong{color:#fff}
 
-    /* Progress bar */
     .bar{
       width:100%;
       height:10px;
@@ -114,19 +101,11 @@
       border-radius:16px;
       padding:16px;
     }
-    .qhead{
-      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
-      margin-bottom:10px;
-    }
+    .qhead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
     .qtitle{margin:0;font-size:16px;color:var(--muted)}
     .qtext{margin:0;font-size:18px;line-height:1.45}
 
-    .choices{
-      display:grid;
-      gap:10px;
-      margin-top:14px;
-    }
-
+    .choices{display:grid; gap:10px; margin-top:14px;}
     .choice{
       text-align:left;
       width:100%;
@@ -145,7 +124,7 @@
       display:grid;place-items:center;
       background: rgba(124,92,255,.16);
       border:1px solid rgba(124,92,255,.25);
-      font-weight:800;
+      font-weight:900;
       color:#d9d2ff;
     }
     .choice.correct{
@@ -157,22 +136,9 @@
       box-shadow: 0 0 0 3px rgba(239,68,68,.12);
     }
 
-    .feedback{
-      margin-top:12px;
-      color:var(--muted);
-      font-size:14px;
-      min-height:18px;
-    }
+    .feedback{margin-top:12px;color:var(--muted);font-size:14px;min-height:18px;}
 
-    /* Toast */
-    .toast-wrap{
-      position: fixed;
-      top: 14px;
-      right: 14px;
-      display: grid;
-      gap: 10px;
-      z-index: 9999;
-    }
+    .toast-wrap{position: fixed;top: 14px;right: 14px;display: grid;gap: 10px;z-index: 9999;}
     .toast{
       width: min(360px, calc(100vw - 28px));
       background: rgba(15,23,42,.92);
@@ -183,37 +149,16 @@
       display:flex; gap:10px; align-items:flex-start;
       animation: in .18s ease-out;
     }
-    @keyframes in{
-      from{transform: translateY(-6px); opacity:0}
-      to{transform: translateY(0); opacity:1}
-    }
-    .dot{
-      width:10px;height:10px;border-radius:999px;margin-top:4px;
-      background: var(--accent);
-    }
+    @keyframes in{from{transform: translateY(-6px); opacity:0}to{transform: translateY(0); opacity:1}}
+    .dot{width:10px;height:10px;border-radius:999px;margin-top:4px;background: var(--accent);}
     .toast.good .dot{background: var(--good)}
     .toast.bad .dot{background: var(--bad)}
-    .toast .t-title{font-weight:800;margin:0 0 2px 0}
+    .toast .t-title{font-weight:900;margin:0 0 2px 0}
     .toast .t-sub{margin:0;color:var(--muted);font-size:13px}
 
-    /* Toggle */
-    .toggle{
-      display:flex; gap:10px; align-items:center;
-      padding:10px 12px;
-    }
-    .switch{
-      width:44px;height:26px;border-radius:999px;
-      background: rgba(255,255,255,.10);
-      border:1px solid var(--border);
-      position:relative;
-      flex:0 0 auto;
-    }
-    .knob{
-      width:20px;height:20px;border-radius:999px;
-      background: #fff;
-      position:absolute; top:2.5px; left:3px;
-      transition: left .2s ease, background .2s ease;
-    }
+    .toggle{display:flex; gap:10px; align-items:center; padding:10px 12px;}
+    .switch{width:44px;height:26px;border-radius:999px;background: rgba(255,255,255,.10);border:1px solid var(--border);position:relative;flex:0 0 auto;}
+    .knob{width:20px;height:20px;border-radius:999px;background: #fff;position:absolute; top:2.5px; left:3px;transition: left .2s ease, background .2s ease;}
     .switch.on{background: rgba(34,197,94,.22); border-color: rgba(34,197,94,.35)}
     .switch.on .knob{left:20px; background:#dcfce7}
     .small{font-size:13px;color:var(--muted)}
@@ -225,11 +170,10 @@
   <div class="title">
     <div>
       <h1>Rizal Review Quiz</h1>
-      <div class="subtitle">Randomized questions from Supabase. Choose how many questions you want.</div>
+      <div class="subtitle">Randomized questions. Session points keep adding until you refresh the page.</div>
     </div>
   </div>
 
-  <!-- Toasts -->
   <div class="toast-wrap" id="toastWrap"></div>
 
   <div class="card">
@@ -250,7 +194,7 @@
           <div class="knob"></div>
         </div>
         <div>
-          <div style="font-weight:700">Auto Next</div>
+          <div style="font-weight:900">Auto Next</div>
           <div class="small">After answering, go next</div>
         </div>
       </div>
@@ -267,7 +211,9 @@
       <div class="row" style="justify-content:space-between;">
         <div class="pills">
           <span class="pill" id="progressPill">Question 1 / 1</span>
-          <span class="pill" id="scorePill">Score: 0</span>
+          <span class="pill">Quiz Score: <strong id="scorePill">0</strong></span>
+          <span class="pill">Session Score: <strong id="sessionScorePill">0</strong></span>
+          <span class="pill">Session Answered: <strong id="sessionAnsweredPill">0</strong></span>
         </div>
         <div class="row">
           <button class="ghost" id="restartBtn" style="width:auto">Restart</button>
@@ -322,6 +268,8 @@
 
   const progressPill = document.getElementById("progressPill");
   const scorePill = document.getElementById("scorePill");
+  const sessionScorePill = document.getElementById("sessionScorePill");
+  const sessionAnsweredPill = document.getElementById("sessionAnsweredPill");
   const progressBar = document.getElementById("progressBar");
 
   const questionTitle = document.getElementById("questionTitle");
@@ -337,6 +285,10 @@
   const autoNextToggle = document.getElementById("autoNextToggle");
   const autoNextSwitch = document.getElementById("autoNextSwitch");
   let autoNext = false;
+
+  // ✅ Session totals (do NOT reset on restart)
+  let sessionScore = 0;
+  let sessionAnswered = 0;
 
   let allQuestions = [];
   let questions = [];
@@ -373,6 +325,11 @@
     setTimeout(() => el.remove(), 2050);
   }
 
+  function updateSessionUI(){
+    sessionScorePill.textContent = String(sessionScore);
+    sessionAnsweredPill.textContent = String(sessionAnswered);
+  }
+
   async function fetchAllQuestionsOnce() {
     meta.textContent = "Loading total questions...";
     const { data, error } = await supabase.from("questions").select("*");
@@ -392,14 +349,13 @@
   function pickQuestions() {
     const chosen = limitSelect.value;
     const shuffled = shuffle([...allQuestions]); // shuffle copy
-
     if (chosen === "all") return shuffled;
 
     const n = Math.max(1, Number(chosen));
     return shuffled.slice(0, Math.min(n, shuffled.length));
   }
 
-  function resetState() {
+  function resetQuizOnly() {
     questions = [];
     index = 0;
     score = 0;
@@ -416,8 +372,10 @@
     const current = index + 1;
 
     progressPill.textContent = `Question ${current} / ${total}`;
-    scorePill.textContent = `Score: ${score}`;
+    scorePill.textContent = String(score);
     progressBar.style.width = `${Math.round((current / total) * 100)}%`;
+
+    updateSessionUI();
 
     questionTitle.textContent = `Question ${current}`;
     questionText.textContent = q.question;
@@ -430,7 +388,6 @@
     ];
 
     const saved = answered.get(q.id);
-
     choicesDiv.innerHTML = "";
     feedback.textContent = "";
 
@@ -438,15 +395,10 @@
       const btn = document.createElement("button");
       btn.className = "choice";
       btn.type = "button";
-      btn.innerHTML = `
-        <div class="key">${opt.key}</div>
-        <div>${opt.text}</div>
-      `;
+      btn.innerHTML = `<div class="key">${opt.key}</div><div>${opt.text}</div>`;
 
       if (saved) {
         btn.disabled = true;
-
-        // highlight correct + wrong selection
         if (opt.key === q.correct_choice) btn.classList.add("correct");
         if (opt.key === saved.selected && !saved.correct) btn.classList.add("wrong");
       }
@@ -473,8 +425,16 @@
     const correct = letter === q.correct_choice;
     answered.set(q.id, { selected: letter, correct });
 
+    // ✅ Session: user answered 1 question
+    sessionAnswered += 1;
+
     if (correct) {
+      // ✅ Quiz score +1
       score += 1;
+
+      // ✅ Session total score +1
+      sessionScore += 1;
+
       showToast("good", "Congrats! 🎉", "You earned 1 point.");
     } else {
       showToast("bad", "Oops! 😅", `Correct answer: ${q.correct_choice}`);
@@ -501,20 +461,19 @@
     const total = questions.length;
     const percent = total ? ((score / total) * 100).toFixed(2) : "0.00";
 
-    const msg = Number(percent) >= 75
-      ? "🎉 Passed! Keep it up!"
-      : "📚 Keep reviewing — you got this!";
+    const msg = Number(percent) >= 75 ? "🎉 Passed! Keep it up!" : "📚 Keep reviewing — you got this!";
 
     document.getElementById("resultText").innerHTML =
-      `<strong>Score:</strong> ${score} / ${total} <br>
-       <strong>Percentage:</strong> ${percent}% <br><br>
+      `<strong>This Quiz:</strong> ${score} / ${total} (${percent}%)<br><br>
+       <strong>Session Total Points:</strong> ${sessionScore}<br>
+       <strong>Session Questions Answered:</strong> ${sessionAnswered}<br><br>
        ${msg}`;
   }
 
   async function startQuiz() {
     resultArea.style.display = "none";
     quizArea.style.display = "none";
-    resetState();
+    resetQuizOnly();
 
     if (allQuestions.length === 0) {
       const ok = await fetchAllQuestionsOnce();
@@ -528,11 +487,12 @@
     }
 
     quizArea.style.display = "block";
+    updateSessionUI();
     showToast("good", "Quiz started!", `Good luck — ${questions.length} questions`);
     renderQuestion();
   }
 
-  // UI controls
+  // buttons
   startBtn.addEventListener("click", startQuiz);
   restartBtn.addEventListener("click", startQuiz);
   finishBtn.addEventListener("click", finishQuiz);
@@ -547,8 +507,9 @@
     showToast("good", "Auto Next", autoNext ? "Enabled" : "Disabled");
   });
 
-  // load total count
+  // init
   fetchAllQuestionsOnce();
+  updateSessionUI();
 </script>
 
 </body>
